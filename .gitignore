@@ -6,5 +6,5 @@ my_secret_file.txt
 .gif
 .json
 uploads/
-*.json
 metadata.json
+venv/
