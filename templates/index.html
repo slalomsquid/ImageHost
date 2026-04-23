@@ -19,16 +19,6 @@
       color: #333;
     }
 
-    .upload-form {
-      width: 400px;
-      max-width: 90%;
-      margin: 20px auto;
-      padding: 20px;
-      background: #fff;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    }
-
     .upload-form input,
     .upload-form textarea,
     .upload-form button {
@@ -92,7 +82,6 @@
       text-overflow: ellipsis;
     }
 
-    /* Modal styles */
     .modal {
       display: none;
       position: fixed;
@@ -157,17 +146,17 @@
       color: #000;
     }
 
-      .search-form {
-    width: 600px;
-    max-width: 90%;
-    margin: 20px auto;
-    padding: 10px 20px;
-    background: #e9ecef; /* Light background for separation */
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
+    .search-form {
+      width: 600px;
+      max-width: 90%;
+      margin: 20px auto;
+      padding: 10px 20px;
+      background: #e9ecef; /* Light background for separation */
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
 
   .search-form input[type="text"] {
     flex-grow: 1;
@@ -198,6 +187,62 @@
     color: #dc3545;
     font-weight: bold;
   }
+
+  .message {
+    width: 600px;
+    max-width: 90%;
+    margin: 0 auto 20px;
+    padding: 14px 16px;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeeba;
+  }
+
+  .edit-form {
+    margin-top: 16px;
+    display: grid;
+    gap: 10px;
+  }
+
+  .edit-form input,
+  .edit-form textarea,
+  .edit-form button {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ced4da;
+    border-radius: 8px;
+    font-size: 1rem;
+  }
+
+  .edit-form button {
+    background: #28a745;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+  }
+
+  .edit-form button:hover {
+    background: #218838;
+  }
+
+  .upload-form {
+    width: 400px;
+    max-width: 90%;
+    margin: 20px auto;
+    padding: 20px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    
+    /* Add these lines to center the boxes */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
   </style>
 </head>
 <body>
@@ -206,8 +251,10 @@
 
   <form class="upload-form" action="/upload" method="post" enctype="multipart/form-data">
     <input type="file" name="file" accept="image/*" required />
-    <input type="text" name="name" placeholder="Photo title" required />
+    <!-- <input type="text" name="name" placeholder="Photo title" required /> -->
+    <textarea name="name" placeholder="Photo title" required></textarea>
     <textarea name="description" placeholder="Write a description... (optional)"></textarea>
+    <textarea name="password" placeholder="Secret code (allows editing)"></textarea>
     <button type="submit">Upload Photo</button>
   </form>
   <form class="search-form" action="/" method="get">
@@ -217,22 +264,33 @@
       <a href="{{ url_for('index') }}" class="clear-search">Clear Search</a>
     {% endif %}
   </form>
-  <form class="upload-form" action="/upload" method="post" enctype="multipart/form-data">
+
+  {% if message %}
+    <div class="message">{{ message }}</div>
+  {% endif %}
 
   <div class="grid">
     {% for img in images %}
-      <div class="tile" onclick="openModal('{{ img.filename }}')">
+      <div id="tile-{{ img.filename }}" class="tile" onclick="openModal('{{ img.filename }}')">
         <img src="/uploads/{{ img.filename }}" alt="{{ img.name }}">
         <h3>{{ img.name }}</h3>
       </div>
 
-      <!-- Modal for this image -->
       <div id="modal-{{ img.filename }}" class="modal" onclick="closeModal(event, '{{ img.filename }}')">
         <div class="modal-content">
           <span class="close-btn" onclick="closeModal(event, '{{ img.filename }}')">&times;</span>
           <img src="/uploads/{{ img.filename }}" alt="{{ img.name }}">
           <h2>{{ img.name }}</h2>
           <p>{{ img.description }}</p>
+          <button type="button" onclick="toggleEditForm('{{ img.filename }}')">Edit</button>
+          <div class="edit-message" id="edit-message-{{ img.filename }}" style="display:none; padding:10px; border-radius:8px; margin-top:12px;"></div>
+          <form id="edit-form-{{ img.filename }}" class="edit-form" action="/edit/{{ img.filename }}" method="post" style="display:none;" onsubmit="submitEditForm(event, '{{ img.filename }}')">
+            <input type="text" id="edit-name-{{ img.filename }}" name="name" value="{{ img.name }}" placeholder="Photo title" required />
+            <textarea id="edit-description-{{ img.filename }}" name="description" placeholder="Edit description">{{ img.description }}</textarea>
+            <input type="password" name="password" placeholder="Enter password to save edits" required/>
+            <button type="submit">Save changes</button>
+            <button type="submit" formaction="/delete/{{ img.filename }}" formmethod="post" style="background-color: red;">Delete</button>
+          </form>
           <p class="date">
             Taken: {{ img.original_date or 'Unknown' }}<br>
             Uploaded: {{ img.upload_date or 'Unknown' }}
@@ -251,6 +309,12 @@
       if (event.target.classList.contains('modal') || event.target.classList.contains('close-btn')) {
         document.getElementById('modal-' + filename).style.display = 'none';
       }
+    }
+
+    function toggleEditForm(filename) {
+      const form = document.getElementById('edit-form-' + filename);
+      if (!form) return;
+      form.style.display = form.style.display === 'none' ? 'grid' : 'none';
     }
   </script>
 
