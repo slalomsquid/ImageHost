@@ -4,6 +4,7 @@ import json
 from datetime import datetime
 from PIL import Image
 from PIL.ExifTags import TAGS
+import socket
 
 app = Flask(__name__)
 
@@ -121,4 +122,9 @@ def uploaded_file(filename):
 
 
 if __name__ == "__main__":
-    app.run(host='192.168.1.109', port=8080, debug=True)
+    # Attribution for IP retrieval method:
+        # Source - https://stackoverflow.com/a/166520
+        # Posted by Vinko Vrsalovic, modified by community. See post 'Timeline' for change history
+        # Retrieved 2026-04-23, License - CC BY-SA 4.0
+    host_ip = socket.gethostbyname_ex(socket.gethostname())[-1][-1]
+    app.run(host=host_ip, port=8080, debug=True)
